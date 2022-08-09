@@ -1,4 +1,3 @@
-from time import sleep
 import requests
 import flet
 
@@ -8,14 +7,14 @@ from flet.dropdown import Dropdown, Option as DropdownOption
 
 class FPLApp(UserControl):
     MANAGERS = {
-        "jd": 5809911,
-        "ab": 5796718,
-        "rp": 5796815,
-        "db": 5797202,
-        "mc": 5797354,
-        "ap": 5797489,
-        "jw": 5798350,
-        "jm": 5009655,
+        "joel": 5809911,
+        "alex": 5796718,
+        "rob": 5796815,
+        "danny": 5797202,
+        "michael": 5797354,
+        "andy": 5797489,
+        "james": 5798350,
+        "jake": 5009655,
     }
     API_BASE = f"https://fantasy.premierleague.com/api/"
 
@@ -94,7 +93,7 @@ class FPLApp(UserControl):
 
     @property
     def previous_gameweek_number(self):
-        self.gameweek_numbers["previous"]
+        return self.gameweek_numbers["previous"]
 
     def teams(self):
         return [(team["code"], team["name"]) for team in self.bootstrap_data["teams"]]
@@ -104,23 +103,16 @@ class FPLApp(UserControl):
 
     def players_for_team(self, team_code):
         team_code = int(team_code)
-        return [
-            {
-                # "first_name": player["first_name"],
-                # "second_name": player.second_name,
-                "web_name": player["web_name"],
-                "team_code": player["team_code"],
-                "id": player["id"],
-                # "code": player["code"],
-            } for player in self.all_players() if player["team_code"] == team_code
-        ]
+        players = [player for player in self.all_players() if player["team_code"] == team_code]
+        players.sort(key=lambda obj: (obj["element_type"], obj["web_name"]))
+        return players
 
     def team_options(self):
         return [DropdownOption(key=team[0], text=team[1]) for team in self.teams()]
 
     def player_options(self, team_code):
         players = self.players_for_team(team_code=team_code)
-        return [DropdownOption(key=player["id"], text=player["web_name"]) for player in players]
+        return [DropdownOption(key=f"{player['id']}__{player['web_name']}", text=player["web_name"]) for player in players]
 
     def change_team(self, e):
         self.selected.value = ""
@@ -130,11 +122,11 @@ class FPLApp(UserControl):
         self.update()
 
     def change_player(self, e):
-        player_code = self.player_dropdown.value
-        self.selected.value = f"Selected player with code {player_code} is available"
+        player_code, player_name = self.player_dropdown.value.split("__")
+        self.selected.value = f"{player_name} is available, fill yer boots"
         for manager, picks in self.current_picks.items():
             if int(player_code) in picks:
-                self.selected.value = f"Not available, {manager} owns this player"
+                self.selected.value = f"UNLUCKEEE! {manager.title()} owns this {player_name}"
                 break
 
         self.update()
