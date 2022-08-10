@@ -17,19 +17,27 @@ class FPLApp(UserControl):
         "jake": 5009655,
     }
     API_BASE = f"https://fantasy.premierleague.com/api/"
+    POSITIONS = {
+        1: "goalkeepers",
+        2: "defenders",
+        3: "midfielders",
+        4: "forwards",
+    }
 
     def __init__(self):
         super().__init__()
         self.bootstrap_data = requests.get(f"{self.API_BASE}bootstrap-static/").json()
         self.team_dropdown = Dropdown(
             on_change=self.change_team,
-            width=200,
-            options=self.team_options()
+            width=300,
+            options=self.team_options(),
+            hint_text="Select a team",
         )
         self.player_dropdown = Dropdown(
             on_change=self.change_player,
-            width=200,
-            visible=False
+            width=300,
+            visible=False,
+            hint_text="Select a player",
         )
         self.gameweek_numbers = {}
         self.current_picks = {}
@@ -48,7 +56,7 @@ class FPLApp(UserControl):
             "current": None,
             "next": None
         }
-        for gw in self.bootstrap_data["events"]:         
+        for gw in self.bootstrap_data["events"]:
             if gw["is_previous"]:
                 gws["previous"] = gw["id"]
 
@@ -112,7 +120,21 @@ class FPLApp(UserControl):
 
     def player_options(self, team_code):
         players = self.players_for_team(team_code=team_code)
-        return [DropdownOption(key=f"{player['id']}__{player['web_name']}", text=player["web_name"]) for player in players]
+        position_code = 0
+        options = []
+        for player in players:
+
+            if player["element_type"] != position_code:
+                position_code = player["element_type"]
+                position_name = self.POSITIONS[position_code].upper()
+                heading = DropdownOption(text=f" {position_name} ".center(25, '-'), disabled=True)
+                options.append(heading)
+
+            full_name = f"{player['first_name']} {player['second_name']}"
+            option = DropdownOption(key=f"{player['id']}__{full_name}", text=player["web_name"])
+            options.append(option)
+
+        return options
 
     def change_team(self, e):
         self.selected.value = ""
@@ -126,27 +148,38 @@ class FPLApp(UserControl):
         self.selected.value = f"{player_name} is available, fill yer boots"
         for manager, picks in self.current_picks.items():
             if int(player_code) in picks:
-                self.selected.value = f"UNLUCKEEE! {manager.title()} owns this {player_name}"
+                self.selected.value = f"UNLUCKEEE! {manager.title()} owns {player_name}"
                 break
 
         self.update()
 
     def build(self):
-        self.selected = Text()
+        self.selected = Text(style="bodyLarge")
         return Column(
             width=600,
+            spacing=25,
+            horizontal_alignment="center",
             controls=[
                 Row(
+                    alignment="center",
+                    controls=[
+                        Text(value="Does anyone have him?", style="titleLarge", color="black")]
+                    ,
+                ),
+                Row(
+                    alignment="center",
                     controls=[
                         self.team_dropdown,
                     ]
                 ),
                 Row(
+                    alignment="center",
                     controls=[
                         self.player_dropdown,
                     ]
                 ),
                 Row(
+                    alignment="center",
                     controls=[
                         self.selected,
                     ]
@@ -163,5 +196,6 @@ def main(page: Page):
 
     fpl_app = FPLApp()
     page.add(fpl_app)
+
 
 flet.app(target=main, view=flet.WEB_BROWSER, port=8000)
