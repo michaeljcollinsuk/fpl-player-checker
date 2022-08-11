@@ -148,15 +148,15 @@ class FPLApp(UserControl):
         self.selected.value = f"{player_name} is available, fill yer boots"
         for manager, picks in self.current_picks.items():
             if int(player_code) in picks:
-                self.selected.value = f"UNLUCKEEE! {manager.title()} owns {player_name}"
+                self.selected.value = f"UNLUCKEEE!\n{manager.title()} owns {player_name}"
                 break
 
         self.update()
 
     def build(self):
-        self.selected = Text(style="bodyLarge")
+        self.selected = Text(style="bodyLarge", text_align="center")
         return Column(
-            width=600,
+            width=300,
             spacing=25,
             horizontal_alignment="center",
             controls=[
@@ -179,12 +179,12 @@ class FPLApp(UserControl):
                     ]
                 ),
                 Row(
+                    wrap=True,
                     alignment="center",
                     controls=[
                         self.selected,
                     ]
-                )
-
+                ),
             ]
         )
 
