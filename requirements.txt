@@ -1,2 +1,2 @@
-flet
+flet>=0.1.33
 requests
