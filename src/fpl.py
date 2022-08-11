@@ -1,7 +1,7 @@
 import requests
 import flet
 
-from flet import UserControl, Column, Row, Page, Text
+from flet import UserControl, Column, Row, Page, Text, Image
 from flet.dropdown import Dropdown, Option as DropdownOption
 
 
@@ -138,33 +138,58 @@ class FPLApp(UserControl):
 
     def change_team(self, e):
         self.selected.value = ""
+        self.unavailable.visible = False
         team_code = self.team_dropdown.value
         self.player_dropdown.options = self.player_options(team_code=team_code)
         self.player_dropdown.visible = True
         self.update()
 
     def change_player(self, e):
+        self.unavailable.visible = False
         player_code, player_name = self.player_dropdown.value.split("__")
-        self.selected.value = f"{player_name} is available, fill yer boots"
+        self.selected.value = f"{player_name} is available for transfer, fill yer boots"
+        self.available.visible = True
         for manager, picks in self.current_picks.items():
             if int(player_code) in picks:
-                self.selected.value = f"UNLUCKEEE!\n{manager.title()} owns {player_name}"
+                self.unavailable.visible = True
+                self.available.visible = False
+                self.selected.value = f"UNLUCKEEEEE!\n{manager.title()} owns {player_name}"
                 break
 
         self.update()
 
     def build(self):
         self.selected = Text(style="bodyLarge", text_align="center")
+        self.unavailable = Image(
+            src="/images/unavailable.jpg",
+            width=300,
+            fit="contain",
+            visible=False
+        )
+        self.available = Image(
+            src="/images/available.jpeg",
+            width=300,
+            fit="contain",
+            visible=False
+        )
+
         return Column(
             width=300,
             spacing=25,
             horizontal_alignment="center",
             controls=[
                 Row(
+                    wrap=True,
                     alignment="center",
                     controls=[
-                        Text(value="Does anyone have him?", style="titleLarge", color="black")]
-                    ,
+                        Text(value="Does anyone have him?", style="titleLarge", color="black"),
+                        Text(
+                            value="A player availability checker for the Nicola Pépé FPL 22/23",
+                            style="titleSmall",
+                            color="black",
+                            text_align="center",
+                        ),
+                    ],
                 ),
                 Row(
                     alignment="center",
@@ -182,6 +207,8 @@ class FPLApp(UserControl):
                     wrap=True,
                     alignment="center",
                     controls=[
+                        self.unavailable,
+                        self.available,
                         self.selected,
                     ]
                 ),
@@ -190,7 +217,7 @@ class FPLApp(UserControl):
 
 
 def main(page: Page):
-    page.title = "FPL player checker app"
+    page.title = "The Nicolas Pépé FPL 22/23 player checker"
     page.horizontal_alignment = "center"
     page.update()
 
@@ -198,4 +225,4 @@ def main(page: Page):
     page.add(fpl_app)
 
 
-flet.app(target=main, view=flet.WEB_BROWSER, port=8000)
+flet.app(target=main, assets_dir="assets", view=flet.WEB_BROWSER, port=8000)
