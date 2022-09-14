@@ -69,16 +69,26 @@ class FPLApp(UserControl):
         self.gameweek_numbers = gws
 
     def _build_current_picks(self):
+        """
+        Build an index of every selected player ID to manager that can be used to find if a player is owned e.g.
+        {
+            10: "michael",
+            22: "michael",
+            33: "joel",
+            48: "alex",
+            51: "joel",
+            ....
+        }
+        """
         if self.current_picks:
             return
 
-        picks = {}
         use_previous_gw = None
-        for manager, id in self.MANAGERS.items():
+        for name, manager_id in self.MANAGERS.items():
             # try current GW picks first
             data = None
             if not use_previous_gw == True:
-                url = f"{self.API_BASE}/entry/{id}/event/{self.current_gameweek_number}/picks/"
+                url = f"{self.API_BASE}/entry/{manager_id}/event/{self.current_gameweek_number}/picks/"
                 response = requests.get(url=url)
                 if response.ok:
                     data = response.json()
@@ -87,13 +97,11 @@ class FPLApp(UserControl):
 
             # if we dont have current gw data use previous
             if not data:
-                url = f"{self.API_BASE}/entry/{id}/event/{self.previous_gameweek_number}/picks/"
+                url = f"{self.API_BASE}/entry/{manager_id}/event/{self.previous_gameweek_number}/picks/"
                 response = requests.get(url=url)
                 data = response.json()
 
-            picks[manager] = [player["element"] for player in data["picks"]]
-
-        self.current_picks = picks
+            self.current_picks.update({pick["element"]: name for pick in data["picks"]})
 
     @property
     def current_gameweek_number(self):
@@ -149,12 +157,12 @@ class FPLApp(UserControl):
         player_code, player_name = self.player_dropdown.value.split("__")
         self.selected.value = f"{player_name} is available for transfer, fill yer boots"
         self.available.visible = True
-        for manager, picks in self.current_picks.items():
-            if int(player_code) in picks:
-                self.unavailable.visible = True
-                self.available.visible = False
-                self.selected.value = f"UNLUCKEEEEE!\n{manager.title()} owns {player_name}"
-                break
+
+        owner = self.current_picks.get(int(player_code))
+        if owner:
+            self.unavailable.visible = True
+            self.available.visible = False
+            self.selected.value = f"UNLUCKEEEEE!\n{owner.title()} owns {player_name}"
 
         self.update()
 
