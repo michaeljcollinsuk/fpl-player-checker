@@ -7,14 +7,14 @@ from flet.dropdown import Dropdown, Option as DropdownOption
 
 class FPLApp(UserControl):
     MANAGERS = {
-        "joel": 5809911,
-        "alex": 5796718,
-        "rob": 5796815,
-        "danny": 5797202,
-        "michael": 5797354,
-        "andy": 5797489,
-        "james": 5798350,
-        "jake": 5009655,
+        5809911: "joel",
+        5796718: "alex",
+        5796815: "rob",
+        5797202: "danny",
+        5797354: "michael",
+        5797489: "andy",
+        5798350: "james",
+        5009655: "jake",
     }
     API_BASE = f"https://fantasy.premierleague.com/api/"
     POSITIONS = {
@@ -68,9 +68,19 @@ class FPLApp(UserControl):
 
         self.gameweek_numbers = gws
 
+    def get_manager_picks(self, manager_id, gameweek):
+        """
+        Return picks for a given manager for a given gameweek
+        """
+        url = f"{self.API_BASE}/entry/{manager_id}/event/{gameweek}/picks/"
+        response = requests.get(url=url)
+        if not response.ok:
+            return []
+        return response.json()["picks"]
+
     def _build_current_picks(self):
         """
-        Build an index of every selected player ID to manager that can be used to find if a player is owned e.g.
+        Build an index of every selected player element ID to manager e.g.
         {
             10: "michael",
             22: "michael",
@@ -83,25 +93,16 @@ class FPLApp(UserControl):
         if self.current_picks:
             return
 
-        use_previous_gw = None
-        for name, manager_id in self.MANAGERS.items():
-            # try current GW picks first
-            data = None
-            if not use_previous_gw == True:
-                url = f"{self.API_BASE}/entry/{manager_id}/event/{self.current_gameweek_number}/picks/"
-                response = requests.get(url=url)
-                if response.ok:
-                    data = response.json()
-                else:
-                    use_previous_gw = True
+        gameweek_to_use = self.current_gameweek_number
+        for manager_id, name in self.MANAGERS.items():
+            picks = self.get_manager_picks(manager_id=manager_id, gameweek=gameweek_to_use)
 
-            # if we dont have current gw data use previous
-            if not data:
-                url = f"{self.API_BASE}/entry/{manager_id}/event/{self.previous_gameweek_number}/picks/"
-                response = requests.get(url=url)
-                data = response.json()
+            if not picks:
+                # use previous gameweek and reset gameweek number for other managers
+                gameweek_to_use = self.previous_gameweek_number
+                picks = self.get_manager_picks(manager_id=manager_id, gameweek=gameweek_to_use)
 
-            self.current_picks.update({pick["element"]: name for pick in data["picks"]})
+            self.current_picks.update({pick["element"]: name for pick in picks})
 
     @property
     def current_gameweek_number(self):
