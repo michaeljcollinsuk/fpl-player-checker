@@ -1,8 +1,9 @@
-import requests
 import flet
 
 from flet import UserControl, Column, Row, Page, Text, Image
 from flet.dropdown import Dropdown, Option as DropdownOption
+
+from client.client import FPLApiClient
 
 
 class FPLApp(UserControl):
@@ -16,7 +17,6 @@ class FPLApp(UserControl):
         5798350: "james",
         5009655: "jake",
     }
-    API_BASE = f"https://fantasy.premierleague.com/api/"
     POSITIONS = {
         1: "goalkeepers",
         2: "defenders",
@@ -26,7 +26,8 @@ class FPLApp(UserControl):
 
     def __init__(self):
         super().__init__()
-        self.bootstrap_data = requests.get(f"{self.API_BASE}bootstrap-static/").json()
+        self.client = FPLApiClient()
+        self.bootstrap_data = self.client.get_bootstrap_data()
         self.team_dropdown = Dropdown(
             on_change=self.change_team,
             width=300,
@@ -72,11 +73,7 @@ class FPLApp(UserControl):
         """
         Return picks for a given manager for a given gameweek
         """
-        url = f"{self.API_BASE}/entry/{manager_id}/event/{gameweek}/picks/"
-        response = requests.get(url=url)
-        if not response.ok:
-            return []
-        return response.json()["picks"]
+        return self.client.get_manager_picks(manager_id, gameweek)["picks"]
 
     def _build_current_picks(self):
         """
