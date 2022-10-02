@@ -145,6 +145,7 @@ class FPLApp(UserControl):
     def change_team(self, e):
         self.selected.value = ""
         self.unavailable.visible = False
+        self.available.visible = False
         team_code = self.team_dropdown.value
         self.player_dropdown.options = self.player_options(team_code=team_code)
         self.player_dropdown.visible = True
