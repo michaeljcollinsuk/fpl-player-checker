@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import flet
 
 from flet import UserControl, Column, Row, Page, Text, Image
@@ -28,6 +30,7 @@ class FPLApp(UserControl):
         super().__init__()
         self.client = FPLApiClient()
         self.bootstrap_data = self.client.get_bootstrap_data()
+        self.player_index = {el["id"]: el for el in self.bootstrap_data["elements"]}
         self.team_dropdown = Dropdown(
             on_change=self.change_team,
             width=300,
@@ -42,11 +45,27 @@ class FPLApp(UserControl):
         )
         self.gameweek_numbers = {}
         self.current_picks = {}
+        self.transfer_index = {}
         self.setup_data()
 
     def setup_data(self):
         self._build_gameweek_numbers()
         self._build_current_picks()
+        self._build_transfer_index()
+
+    def _build_transfer_index(self):
+        all_transfers = []
+        for manager_id in self.MANAGERS.keys():
+            all_transfers.append(self.client.get_manager_transfers(manager_id))
+
+        transfers_dict = defaultdict(list)
+
+        for manager_id, manager_name in self.MANAGERS.items():
+            for transfer in self.client.get_manager_transfers(manager_id):
+                transfer["manager_name"] = manager_name.title()
+                sold_player_id = transfer["element_out"]
+                transfers_dict[sold_player_id].append(transfer)
+        self.transfer_index = transfers_dict
 
     def _build_gameweek_numbers(self):
         if self.gameweek_numbers:
@@ -158,11 +177,25 @@ class FPLApp(UserControl):
         self.available.visible = True
 
         owner = self.current_picks.get(int(player_code))
+
+        past_transfers = self.transfer_index.get(int(player_code))
+
         if owner:
             self.unavailable.visible = True
             self.available.visible = False
             self.selected.value = f"UNLUCKEEEEE!\n{owner.title()} owns {player_name}"
+            past_owners = ",".join([t["manager_name"] for t in past_transfers])
+            self.selected.value += f"\nPreviously owned by: {past_owners}"
 
+            self.update()
+            return
+
+        past_transfers = self.transfer_index.get(int(player_code))
+        if past_transfers:
+            last_transfer = past_transfers[0]
+            replacement = self.player_index.get(last_transfer["element_in"])["web_name"]
+            self.selected.value += f"\nLast owned by {last_transfer['manager_name']}, sold in Gameweek {last_transfer['event']} for {replacement}"
+            # self.selected.value = past_transfers
         self.update()
 
     def build(self):
