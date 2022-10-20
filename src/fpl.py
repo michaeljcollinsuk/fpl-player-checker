@@ -69,12 +69,6 @@ class FPLApp(UserControl):
 
         self.gameweek_numbers = gws
 
-    def get_manager_picks(self, manager_id, gameweek):
-        """
-        Return picks for a given manager for a given gameweek
-        """
-        return self.client.get_manager_picks(manager_id, gameweek)["picks"]
-
     def _build_current_picks(self):
         """
         Build an index of every selected player element ID to manager e.g.
@@ -90,15 +84,14 @@ class FPLApp(UserControl):
         if self.current_picks:
             return
 
-        gameweek_to_use = self.current_gameweek_number
         for manager_id, name in self.MANAGERS.items():
-            picks = self.get_manager_picks(manager_id=manager_id, gameweek=gameweek_to_use)
+            picks = self.client.get_manager_picks(manager_id=manager_id, gameweek=self.current_gameweek_number)
 
-            if not picks:
-                # use previous gameweek and reset gameweek number for other managers
-                gameweek_to_use = self.previous_gameweek_number
-                picks = self.get_manager_picks(manager_id=manager_id, gameweek=gameweek_to_use)
+            if not picks or picks["active_chip"] == "freehit":
+                # use previous gameweek if no picks for current gameweek
+                picks = self.client.get_manager_picks(manager_id=manager_id, gameweek=self.previous_gameweek_number)
 
+            picks = picks["picks"]
             self.current_picks.update({pick["element"]: name for pick in picks})
 
     @property
