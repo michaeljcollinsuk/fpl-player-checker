@@ -96,7 +96,7 @@ class FPLApp(UserControl):
         """
         Get latest valid picks. If picks are from using a freehit, they are invalid, so look at the previous week.
         """
-        if  gameweek <= 0 or gameweek >= 39:
+        if gameweek <= 0 or gameweek >= 39:
             raise Exception("Invalid gameweek")
 
         picks = self.client.get_manager_picks(manager_id=manager_id, gameweek=gameweek)
