@@ -85,22 +85,26 @@ class FPLApp(UserControl):
             return
 
         for manager_id, name in self.MANAGERS.items():
-            picks = self.client.get_manager_picks(manager_id=manager_id, gameweek=self.current_gameweek_number)
-
-            if not picks or picks["active_chip"] == "freehit":
-                # use previous gameweek if no picks for current gameweek
-                picks = self.client.get_manager_picks(manager_id=manager_id, gameweek=self.previous_gameweek_number)
-
-            picks = picks["picks"]
+            picks = self.get_latest_picks(manager_id=manager_id, gameweek=self.current_gameweek_number)["picks"]
             self.current_picks.update({pick["element"]: name for pick in picks})
 
     @property
     def current_gameweek_number(self):
         return self.gameweek_numbers["current"]
 
-    @property
-    def previous_gameweek_number(self):
-        return self.gameweek_numbers["previous"]
+    def get_latest_picks(self, manager_id, gameweek):
+        """
+        Get latest valid picks. If picks are from using a freehit, they are invalid, so look at the previous week.
+        """
+        if  gameweek <= 0 or gameweek >= 39:
+            raise Exception("Invalid gameweek")
+
+        picks = self.client.get_manager_picks(manager_id=manager_id, gameweek=gameweek)
+
+        if not picks or picks["active_chip"] == "freehit":
+            picks = self.get_latest_picks(manager_id, gameweek - 1)
+
+        return picks
 
     def teams(self):
         return [(team["code"], team["name"]) for team in self.bootstrap_data["teams"]]
