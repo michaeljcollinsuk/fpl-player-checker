@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 
 import flet
@@ -26,7 +27,7 @@ class FPLApp(UserControl):
         4: "forwards",
     }
 
-    def __init__(self):
+    def __init__(self, transfers):
         super().__init__()
         self.client = FPLApiClient()
         self.bootstrap_data = self.client.get_bootstrap_data()
@@ -45,7 +46,11 @@ class FPLApp(UserControl):
         )
         self.gameweek_numbers = {}
         self.current_picks = {}
-        self.transfer_index = {}
+        if transfers:
+            self.transfer_index = json.loads(transfers)
+            # print(self.transfer_index)
+        else:
+            self.transfer_index = {}
         self.setup_data()
 
     def setup_data(self):
@@ -54,6 +59,9 @@ class FPLApp(UserControl):
         self._build_transfer_index()
 
     def _build_transfer_index(self):
+        if self.transfer_index:
+            return self.transfer_index
+
         all_transfers = []
         for manager_id in self.MANAGERS.keys():
             all_transfers.append(self.client.get_manager_transfers(manager_id))
@@ -66,6 +74,7 @@ class FPLApp(UserControl):
                 sold_player_id = transfer["element_out"]
                 transfers_dict[sold_player_id].append(transfer)
         self.transfer_index = transfers_dict
+        # self.page.client_storage.set("transfers", json.dumps(self.transfer_index))
 
     def _build_gameweek_numbers(self):
         if self.gameweek_numbers:
@@ -118,7 +127,7 @@ class FPLApp(UserControl):
                 gameweek_to_use = self.previous_gameweek_number
                 picks = self.get_manager_picks(manager_id=manager_id, gameweek=gameweek_to_use)
 
-            self.current_picks.update({pick["element"]: name for pick in picks})
+            self.current_picks.update({str(pick["element"]): name for pick in picks})
 
     @property
     def current_gameweek_number(self):
@@ -176,10 +185,14 @@ class FPLApp(UserControl):
         self.selected.value = f"{player_name} is available for transfer, fill yer boots"
         self.available.visible = True
 
-        owner = self.current_picks.get(int(player_code))
+        owner = self.current_picks.get(player_code)
 
-        past_transfers = self.transfer_index.get(int(player_code))
-
+        past_transfers = self.transfer_index.get(player_code)
+        # import pdb; pdb.set_trace()
+        # print(past_transfers)
+        # print(past_transfers)
+        # print(past_transfers)
+        #
         if owner:
             self.unavailable.visible = True
             self.available.visible = False
@@ -190,7 +203,8 @@ class FPLApp(UserControl):
             self.update()
             return
 
-        past_transfers = self.transfer_index.get(int(player_code))
+        past_transfers = self.transfer_index.get(player_code)
+        # print(past_transfers)
         if past_transfers:
             last_transfer = past_transfers[0]
             replacement = self.player_index.get(last_transfer["element_in"])["web_name"]
@@ -260,8 +274,14 @@ def main(page: Page):
     page.title = "The Nicolas Pépé FPL 22/23 player checker"
     page.horizontal_alignment = "center"
     page.update()
+    transfers = page.client_storage.get("transfers")
+    fpl_app = FPLApp(transfers=transfers)
+    transfers = fpl_app.transfer_index
 
-    fpl_app = FPLApp()
+    #TODO start storing all data in session, and invalidate after new GW?
+    if transfers:
+        page.client_storage.set("transfers", transfers)
+
     page.add(fpl_app)
 
 
