@@ -96,6 +96,9 @@ class FPLApp(UserControl):
         """
         Get latest valid picks. If picks are from using a freehit, they are invalid, so look at the previous week.
         """
+        if not gameweek:
+            return {"picks": {}}
+
         if gameweek <= 0 or gameweek >= 39:
             raise Exception("Invalid gameweek")
 
@@ -188,7 +191,7 @@ class FPLApp(UserControl):
                     controls=[
                         Text(value="Does anyone have him?", style="titleLarge", color="black"),
                         Text(
-                            value="A player availability checker for the Nicola Pépé FPL 22/23",
+                            value="A player availability checker for the Wout Faes FPL 23/24",
                             style="titleSmall",
                             color="black",
                             text_align="center",
@@ -221,7 +224,7 @@ class FPLApp(UserControl):
 
 
 def main(page: Page):
-    page.title = "The Nicolas Pépé FPL 22/23 player checker"
+    page.title = "The Wout Faes FPL 23/24 player checker"
     page.horizontal_alignment = "center"
     page.update()
 
