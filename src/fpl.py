@@ -226,6 +226,12 @@ class FPLApp(UserControl):
 def main(page: Page):
     page.title = "The Wout Faes FPL 23/24 player checker"
     page.horizontal_alignment = "center"
+
+    page.fonts = {
+        "Gothica-Book": "fonts/Gothica-Book.ttf",
+    }
+    page.theme = flet.Theme(font_family="Gothica-Book")
+    page.bgcolor = "#DECDC0"
     page.update()
 
     fpl_app = FPLApp()
