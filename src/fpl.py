@@ -1,7 +1,7 @@
 import flet
 
-from flet import UserControl, Column, Row, Page, Text, Image
-from flet.dropdown import Dropdown, Option as DropdownOption
+from flet import UserControl, Column, Row, Page, Text, Image, Dropdown 
+
 
 from client.client import FPLApiClient
 
@@ -122,7 +122,7 @@ class FPLApp(UserControl):
         return players
 
     def team_options(self):
-        return [DropdownOption(key=team[0], text=team[1]) for team in self.teams()]
+        return [flet.dropdown.Option(key=team[0], text=team[1]) for team in self.teams()]
 
     def player_options(self, team_code):
         players = self.players_for_team(team_code=team_code)
@@ -133,11 +133,11 @@ class FPLApp(UserControl):
             if player["element_type"] != position_code:
                 position_code = player["element_type"]
                 position_name = self.POSITIONS[position_code].upper()
-                heading = DropdownOption(text=f" {position_name} ".center(25, '-'), disabled=True)
+                heading = flet.dropdown.Option(text=f" {position_name} ".center(25, '-'), disabled=True)
                 options.append(heading)
 
             full_name = f"{player['first_name']} {player['second_name']}"
-            option = DropdownOption(key=f"{player['id']}__{full_name}", text=player["web_name"])
+            option = flet.dropdown.Option(key=f"{player['id']}__{full_name}", text=player["web_name"])
             options.append(option)
 
         return options
