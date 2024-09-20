@@ -8,14 +8,14 @@ from client.client import FPLApiClient
 
 class FPLApp(UserControl):
     MANAGERS = {
-        5279811: "joel",
-        5279664: "alex",
-        5278032: "rob",
-        5279228: "danny",
-        1889632: "michael",
-        5277631: "andy",
-        5279748: "james",
-        5278753: "jake",
+        4679310: "joel",
+        4680239: "alex",
+        4680068: "rob",
+        4679848: "danny",
+        4679423: "michael",
+        610713: "andy",
+        4680327: "james",
+        4609896: "jake",
     }
     POSITIONS = {
         1: "goalkeepers",
