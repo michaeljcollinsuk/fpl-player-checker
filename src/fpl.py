@@ -190,11 +190,10 @@ class FPLApp(UserControl):
                     wrap=True,
                     alignment="center",
                     controls=[
-                        Text(value="Does anyone have him?", style="titleLarge", color="black"),
+                        Text(value="Guinness Deep Fantasy Premier League 24/25", style="titleLarge", text_align="center",),
                         Text(
-                            value="A player availability checker for the Guinness Deep FPL 24/25",
+                            value="Does anyone have him?",
                             style="titleSmall",
-                            color="black",
                             text_align="center",
                         ),
                     ],
@@ -229,10 +228,12 @@ def main(page: Page):
     page.horizontal_alignment = "center"
 
     page.fonts = {
-        "Gothica-Book": "fonts/Gothica-Book.ttf",
+        "guinness": "fonts/guinness.ttf",
     }
-    page.theme = flet.Theme(font_family="Gothica-Book")
-    page.bgcolor = "#DECDC0"
+    theme = flet.Theme(font_family="guinness")
+    page.theme = theme
+    page.dark_theme = theme
+    page.theme_mode = "dark"
     page.update()
 
     fpl_app = FPLApp()
