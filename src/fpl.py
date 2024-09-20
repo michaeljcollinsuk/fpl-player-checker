@@ -191,7 +191,7 @@ class FPLApp(UserControl):
                     controls=[
                         Text(value="Does anyone have him?", style="titleLarge", color="black"),
                         Text(
-                            value="A player availability checker for the Wout Faes FPL 23/24",
+                            value="A player availability checker for the Guinness Deep FPL 24/25",
                             style="titleSmall",
                             color="black",
                             text_align="center",
@@ -224,7 +224,7 @@ class FPLApp(UserControl):
 
 
 def main(page: Page):
-    page.title = "The Wout Faes FPL 23/24 player checker"
+    page.title = "The Guinness Deep FPL 24/25 player checker"
     page.horizontal_alignment = "center"
 
     page.fonts = {
