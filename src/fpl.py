@@ -129,7 +129,8 @@ class FPLApp(UserControl):
         position_code = 0
         options = []
         for player in players:
-
+            if player["status"] == "u":
+                continue
             if player["element_type"] != position_code:
                 position_code = player["element_type"]
                 position_name = self.POSITIONS[position_code].upper()
