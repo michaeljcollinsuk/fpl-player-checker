@@ -1,12 +1,10 @@
 import flet
 
-from flet import UserControl, Column, Row, Page, Text, Image, Dropdown 
-
-
+from flet import Column, Row, Page, Text, Image, Dropdown
 from client.client import FPLApiClient
 
 
-class FPLApp(UserControl):
+class FPLApp(Column):
     MANAGERS = {
         4679310: "joel",
         4680239: "alex",
@@ -24,11 +22,16 @@ class FPLApp(UserControl):
         4: "forwards",
         5: "manager",
     }
+    RUBBISH_ASSISTANTS = ["Mikel Arteta", "Ruben Filipe Marques Diogo Amorim", "Enzo Maresca", "Arne Slot"]
 
     def __init__(self):
-        super().__init__()
+        super().__init__(width=300, spacing=25, horizontal_alignment="center")
         self.client = FPLApiClient()
         self.bootstrap_data = self.client.get_bootstrap_data()
+        self.gameweek_numbers = {}
+        self.current_picks = {}
+        self.setup_data()
+
         self.team_dropdown = Dropdown(
             on_change=self.change_team,
             width=300,
@@ -41,9 +44,37 @@ class FPLApp(UserControl):
             visible=False,
             hint_text="Select a player",
         )
-        self.gameweek_numbers = {}
-        self.current_picks = {}
-        self.setup_data()
+        self.selected = Text(style="bodyLarge", text_align="center")
+        self.unavailable = Image(
+            src="/images/unavailable.jpg",
+            width=300,
+            fit="contain",
+            visible=False,
+        )
+        self.available = Image(
+            src="/images/available.jpeg",
+            width=300,
+            fit="contain",
+            visible=False,
+        )
+
+        self.controls.extend([
+            Row(
+                wrap=True,
+                alignment="center",
+                controls=[
+                    Text(value="Guinness Deep Fantasy Premier League 24/25", style="titleLarge", text_align="center"),
+                    Text(value="Does anyone have him?", style="titleSmall", text_align="center"),
+                ],
+            ),
+            Row(alignment="center", controls=[self.team_dropdown]),
+            Row(alignment="center", controls=[self.player_dropdown]),
+            Row(
+                wrap=True,
+                alignment="center",
+                controls=[self.unavailable, self.available, self.selected],
+            ),
+        ])
 
     def setup_data(self):
         self._build_gameweek_numbers()
@@ -53,18 +84,12 @@ class FPLApp(UserControl):
         if self.gameweek_numbers:
             return
 
-        gws = {
-            "previous": None,
-            "current": None,
-            "next": None
-        }
+        gws = {"previous": None, "current": None, "next": None}
         for gw in self.bootstrap_data["events"]:
             if gw["is_previous"]:
                 gws["previous"] = gw["id"]
-
             if gw["is_current"]:
                 gws["current"] = gw["id"]
-
             if gw["is_next"]:
                 gws["next"] = gw["id"]
 
@@ -99,12 +124,10 @@ class FPLApp(UserControl):
         """
         if not gameweek:
             return {"picks": {}}
-
         if gameweek <= 0 or gameweek >= 39:
             raise Exception("Invalid gameweek")
 
         picks = self.client.get_manager_picks(manager_id=manager_id, gameweek=gameweek)
-
         if not picks or picks["active_chip"] == "freehit":
             picks = self.get_latest_picks(manager_id, gameweek - 1)
 
@@ -142,7 +165,7 @@ class FPLApp(UserControl):
                 options.append(heading)
 
             full_name = f"{player['first_name']} {player['second_name']}"
-            option = flet.dropdown.Option(key=f"{player['id']}__{full_name}", text=player["web_name"])
+            option = flet.dropdown.Option(key=f"{player['id']}__{full_name}__{position_code}", text=player["web_name"])
             options.append(option)
 
         return options
@@ -158,82 +181,35 @@ class FPLApp(UserControl):
 
     def change_player(self, e):
         self.unavailable.visible = False
-        player_code, player_name = self.player_dropdown.value.split("__")
-        self.selected.value = f"{player_name} is available for transfer, fill yer boots"
+        player_code, player_name, position_code = self.player_dropdown.value.split("__")
+        msg = f"{player_name} is available for transfer, fill yer boots"
+        is_manager = position_code == "5"
+        if is_manager:
+            msg = f"{player_name} is available and willing to assist you."
+            if player_name in self.RUBBISH_ASSISTANTS:
+                msg = f"{msg} But come on, you can do better than this fraud..."
+            else:
+                msg = f"{msg} Sign him up quick!"
+        self.selected.value = msg
         self.available.visible = True
 
         owner = self.current_picks.get(int(player_code))
         if owner:
             self.unavailable.visible = True
             self.available.visible = False
-            self.selected.value = f"UNLUCKEEEEE!\n{owner.title()} owns {player_name}"
+            selected_msg = f"UNLUCKEEEEE!\n{owner.title()} owns {player_name}"
+            if is_manager:
+                selected_msg = f"UNLUCKEEEEE!\n{player_name} is {owner.title()}'s assistant manager"
+            self.selected.value = selected_msg
 
         self.update()
-
-    def build(self):
-        self.selected = Text(style="bodyLarge", text_align="center")
-        self.unavailable = Image(
-            src="/images/unavailable.jpg",
-            width=300,
-            fit="contain",
-            visible=False
-        )
-        self.available = Image(
-            src="/images/available.jpeg",
-            width=300,
-            fit="contain",
-            visible=False
-        )
-
-        return Column(
-            width=300,
-            spacing=25,
-            horizontal_alignment="center",
-            controls=[
-                Row(
-                    wrap=True,
-                    alignment="center",
-                    controls=[
-                        Text(value="Guinness Deep Fantasy Premier League 24/25", style="titleLarge", text_align="center",),
-                        Text(
-                            value="Does anyone have him?",
-                            style="titleSmall",
-                            text_align="center",
-                        ),
-                    ],
-                ),
-                Row(
-                    alignment="center",
-                    controls=[
-                        self.team_dropdown,
-                    ]
-                ),
-                Row(
-                    alignment="center",
-                    controls=[
-                        self.player_dropdown,
-                    ]
-                ),
-                Row(
-                    wrap=True,
-                    alignment="center",
-                    controls=[
-                        self.unavailable,
-                        self.available,
-                        self.selected,
-                    ]
-                ),
-            ]
-        )
 
 
 def main(page: Page):
     page.title = "The Guinness Deep FPL 24/25 player checker"
     page.horizontal_alignment = "center"
 
-    page.fonts = {
-        "guinness": "fonts/guinness.ttf",
-    }
+    page.fonts = {"guinness": "fonts/guinness.ttf"}
     theme = flet.Theme(font_family="guinness")
     page.theme = theme
     page.dark_theme = theme
