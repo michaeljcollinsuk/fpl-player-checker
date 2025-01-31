@@ -22,6 +22,7 @@ class FPLApp(UserControl):
         2: "defenders",
         3: "midfielders",
         4: "forwards",
+        5: "manager",
     }
 
     def __init__(self):
@@ -133,7 +134,10 @@ class FPLApp(UserControl):
                 continue
             if player["element_type"] != position_code:
                 position_code = player["element_type"]
-                position_name = self.POSITIONS[position_code].upper()
+                try:
+                    position_name = self.POSITIONS[position_code].upper()
+                except KeyError:
+                    continue
                 heading = flet.dropdown.Option(text=f" {position_name} ".center(25, '-'), disabled=True)
                 options.append(heading)
 
